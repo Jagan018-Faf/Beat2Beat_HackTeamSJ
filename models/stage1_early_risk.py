@@ -72,6 +72,34 @@ print("Random Forest ROC-AUC:",
 print("\nClassification Report (Logistic Regression)")
 print(classification_report(y_test, log_preds))
 
+from sklearn.metrics import roc_curve, confusion_matrix
+import seaborn as sns
+
+# ===============================
+# ROC Curve
+# ===============================
+y_probs = log_model.predict_proba(X_test_scaled)[:, 1]
+fpr, tpr, _ = roc_curve(y_test, y_probs)
+
+plt.figure()
+plt.plot(fpr, tpr)
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("Stage 1 ROC Curve")
+plt.savefig("outputs/stage1_roc_curve.png")
+
+# ===============================
+# Confusion Matrix
+# ===============================
+cm = confusion_matrix(y_test, log_preds)
+
+plt.figure()
+sns.heatmap(cm, annot=True, fmt='d')
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Stage 1 Confusion Matrix")
+plt.savefig("outputs/stage1_confusion_matrix.png")
+
 # ===============================
 # 7. Feature Importance (RF)
 # ===============================
