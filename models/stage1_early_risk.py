@@ -12,7 +12,8 @@ from sklearn.metrics import classification_report, roc_auc_score
 # ===============================
 # 1. Load Dataset
 # ===============================
-df = pd.read_csv("data/cardio_base.csv")
+df = pd.read_csv("data/cardio_base.csv", sep=";")
+print("Columns in dataset:", df.columns)
 
 # ===============================
 # 2. Basic Preprocessing
