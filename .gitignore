@@ -212,3 +212,4 @@ outputs/*.pkl
 git add .gitignore
 git commit -m "Ignore outputs folder"
 git push
+data/ecg_timeseries.xlsx
