@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 # ===============================
 print("Loading ECG dataset...")
 
-df = pd.read_excel("data/ecg_timeseries.xlsx", header=None)
+df = pd.read_csv("data/ecg_timeseries.csv", header=None)
 
 # Remove rows that are fully zero
 df = df.loc[~(df == 0).all(axis=1)]
