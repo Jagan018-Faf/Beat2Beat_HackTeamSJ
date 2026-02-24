@@ -209,3 +209,6 @@ __marimo__/
 __pycache__/
 *.pyc
 outputs/*.pkl
+git add .gitignore
+git commit -m "Ignore outputs folder"
+git push
