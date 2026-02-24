@@ -17,12 +17,12 @@ stage3_scaler = joblib.load("outputs/stage3_ecg_scaler.pkl")
 print("All models loaded successfully.")
 
 # ===============================
-# Stage 1 Input
+# Stage 1 SAFE INPUT
 # ===============================
 stage1_columns = stage1_scaler.feature_names_in_
 
 stage1_data = pd.DataFrame(
-    [[45, 170, 70, 120, 80, 1, 0, 0, 1]],
+    np.zeros((1, len(stage1_columns))),
     columns=stage1_columns
 )
 
@@ -30,15 +30,12 @@ stage1_scaled = stage1_scaler.transform(stage1_data)
 stage1_risk = stage1_model.predict_proba(stage1_scaled)[0][1]
 
 # ===============================
-# Stage 2 Input (SAFE FIX)
+# Stage 2 SAFE INPUT
 # ===============================
 stage2_columns = stage2_scaler.feature_names_in_
 
-# Example patient (must match column order automatically)
-stage2_example_values = [0] * len(stage2_columns)
-
 stage2_data = pd.DataFrame(
-    [stage2_example_values],
+    np.zeros((1, len(stage2_columns))),
     columns=stage2_columns
 )
 
@@ -46,13 +43,15 @@ stage2_scaled = stage2_scaler.transform(stage2_data)
 stage2_risk = stage2_model.predict_proba(stage2_scaled)[0][1]
 
 # ===============================
-# Stage 3 Input
+# Stage 3 SAFE INPUT
 # ===============================
-ecg_example = np.random.rand(1, stage3_scaler.n_features_in_)
-ecg_scaled = stage3_scaler.transform(ecg_example)
+ecg_data = np.zeros((1, stage3_scaler.n_features_in_))
 
+ecg_scaled = stage3_scaler.transform(ecg_data)
 ecg_score = stage3_model.decision_function(ecg_scaled)[0]
-ecg_risk = 1 - ecg_score
+
+# Convert anomaly score to positive risk-like scale
+ecg_risk = abs(ecg_score)
 
 # ===============================
 # Final Risk Fusion
