@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 os.makedirs("outputs", exist_ok=True)
 
 # ===============================
-# 1. Load ECG Data (Optimized)
+# 1. Load ECG Data Safely
 # ===============================
 print("Loading ECG dataset...")
 
@@ -23,17 +23,37 @@ df = pd.read_csv(
     low_memory=False
 )
 
-# Remove rows that are fully zero
-df = df.loc[~(df == 0).all(axis=1)]
-
-print("Shape after removing zero rows:", df.shape)
+print("Original Shape:", df.shape)
 
 # ===============================
-# 2. Feature Extraction (Upgraded)
+# 2. Clean Corrupted Values (CRITICAL FIX)
+# ===============================
+print("Cleaning corrupted numeric values...")
+
+# Convert everything safely to numeric
+df = df.apply(pd.to_numeric, errors="coerce")
+
+# Replace invalid values (NaN) with 0
+df = df.fillna(0)
+
+# Remove rows fully zero
+df = df.loc[~(df == 0).all(axis=1)]
+
+print("Shape after cleaning:", df.shape)
+
+# Convert to float32 to reduce memory
+df = df.astype(np.float32)
+
+# ===============================
+# 3. Feature Extraction (Robust)
 # ===============================
 
 def extract_features(row):
-    row = np.array(row, dtype=np.float32)
+    row = row.values
+
+    # If row is empty or constant, handle safely
+    if np.all(row == 0):
+        return [0]*11
 
     # Time domain features
     mean_val = np.mean(row)
@@ -43,7 +63,7 @@ def extract_features(row):
     rms = np.sqrt(np.mean(row**2))
     energy = np.sum(row**2)
     skewness = skew(row)
-    kurt = kurtosis(row)
+    kurt_val = kurtosis(row)
     peak_to_peak = max_val - min_val
 
     # Frequency domain
@@ -61,7 +81,7 @@ def extract_features(row):
         rms,
         energy,
         skewness,
-        kurt,
+        kurt_val,
         peak_to_peak,
         dominant_freq,
         spectral_entropy
@@ -83,13 +103,15 @@ feature_df = pd.DataFrame(features.tolist(), columns=[
 print("Feature shape:", feature_df.shape)
 
 # ===============================
-# 3. Scale Features
+# 4. Scale Features
 # ===============================
+print("Scaling features...")
+
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(feature_df)
 
 # ===============================
-# 4. Train Isolation Forest
+# 5. Train Isolation Forest
 # ===============================
 print("Training Isolation Forest...")
 
@@ -102,7 +124,9 @@ model = IsolationForest(
 
 model.fit(X_scaled)
 
-# Anomaly scores
+# ===============================
+# 6. Anomaly Scores
+# ===============================
 scores = model.decision_function(X_scaled)
 anomaly_labels = model.predict(X_scaled)
 
@@ -110,17 +134,17 @@ feature_df["anomaly_score"] = scores
 feature_df["anomaly_label"] = anomaly_labels
 
 # ===============================
-# 5. Save Model & Outputs
+# 7. Save Model & Outputs
 # ===============================
+print("Saving outputs...")
+
 joblib.dump(model, "outputs/stage3_ecg_model.pkl")
 joblib.dump(scaler, "outputs/stage3_ecg_scaler.pkl")
 
 feature_df.to_csv("outputs/stage3_ecg_features.csv", index=False)
 
-print("Stage 3 ECG Anomaly Model Completed.")
-
 # ===============================
-# 6. Visualization
+# 8. Visualization
 # ===============================
 plt.figure()
 plt.hist(scores, bins=25)
@@ -130,4 +154,5 @@ plt.ylabel("Frequency")
 plt.savefig("outputs/stage3_anomaly_distribution.png")
 plt.close()
 
-print("Stage 3 outputs saved in /outputs folder.")
+print("Stage 3 ECG Anomaly Model Completed Successfully.")
+print("All outputs saved inside /outputs folder.")
